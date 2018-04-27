@@ -1,0 +1,194 @@
+<link rel="import"  href="https://polygit.org/components/polymer/polymer-element.html">
+<link rel="import"  href="polymer/polymer-element.html">
+<link rel="import"  href="https://polygit.org/components/iron-input/iron-input.html">
+<!-- <link rel="import"  href="https://polygit.org/components/iron-ajax/iron-ajax.html"> -->
+<link rel="import"  href="iron-ajax-master/iron-ajax.html">
+
+<dom-module id="editable-city-tags" >
+  <template>
+    <style>
+      .container{
+        width: 600px;
+        margin: 5rem auto;
+        border:1px solid #EEE;
+        padding: 2rem;
+      }
+      .row{
+        border:1px solid #EEE;
+      }
+      .col{
+        border:1px solid #EEE;
+      }
+      button{
+        background-color: white;
+        border: 1px solid #AAA;
+        color: #AAA;
+        cursor: pointer;
+      }
+      .btn-tags-wrapper, .btn-input-wrapper, .btn-search-wrapper {
+        padding: 1rem;
+
+      }
+      input {
+        padding: 6px;
+      }
+      button {
+        padding: 7px;
+      }
+      ul{
+
+      }
+      li {
+        border: 1px solid #AAA;
+        padding: 6px;
+        display: inline-block;
+        cursor: pointer;
+      }
+      .btn-close {
+        border-radius: 50%;
+        padding: 1px 4px;
+        background-color: #EEE;
+        color: #999;
+        margin-left: .5rem;
+        border: none;
+      }
+      .btn-close:hover{
+        color: #FFF;
+        background-color: #AAA;
+      }
+      .btn-close:focus{
+        outline: none;
+      }
+    </style>
+    <div class="container">
+
+      <div class="btn-tags-wrapper">
+        <ul style="height:100px">
+          <template is="dom-repeat" items="{{tags}}">
+                <li class="tag">[[item]]<button on-click="removeTag" class="btn-close">x</button></li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="btn-input-wrapper">
+        <iron-input bind-value="{{userInput}}">
+          <input is="iron-input" placeholder="Insert a city name...">
+        </iron-input>
+        <button on-click="addCity">Add Tag</button>
+      </div>
+
+      <div class="btn-search-wrapper">
+        <button on-click="getResult">Search</button>
+      </div>
+
+      <iron-ajax id="ajax" url="http://localhost/editable-city-tags/lizeo-test.json" handle-as="json" last-response="{{ajaxResponse}}" on-response="response" on-request="handleRequest"></iron-ajax>
+      <template is="dom-repeat" items="{{ajaxResponse.products}}">
+          <ul>
+            <li class="tag">[[item.brand]] [[item.city]] [[item.price]]</li>
+          </ul>
+      </template>
+
+    </div>
+
+    <!-- <iron-ajax id="ajax" url="http://localhost:3000/products" handle-as="json" last-response="{{ajaxResponse}}" on-response="response" on-request="handleRequest"></iron-ajax> -->
+
+  </template>
+
+  <script>
+    class EditableCityTags extends Polymer.Element {
+      static get is() { return "editable-city-tags"; }
+
+      static get properties() {
+        return {
+          userInput: {
+            type: String,
+            value: ''
+          },
+          cities: {
+            type: Array,
+            value : ['Paris', 'Lyon', 'Toulouse', 'Marseille', 'Lille']
+          },
+          ajaxResponse: {
+            type: Object,
+            value: function() {
+              return {};
+            }
+          },
+          tags : {
+            type : Array,
+            value : function () {
+              return [];
+            }
+          },
+          city : {
+             type : String,
+             value : 'Lille'
+           }
+        };
+      }
+
+      addTag(tag) {
+        this.push('tags',tag);
+      }
+
+      processAjaxResult(data) {
+        this.ajaxResponse = data;
+      }
+
+      removeTag(tag){
+        console.log(this.tags);
+        console.log(tag.model.index);
+        this.splice('tags', tag.model.index, 1);
+        this.userInput = this.tags.join();
+      }
+
+      checkJsonFileLoaded(j) {
+        if (j) {
+           this.set('items', j);
+           console.log(items);
+       }
+      }
+
+      addCity() {
+        // var tags = new Array();
+        var tags = new Array();
+         this.userInput.split(" ").forEach(
+          function(entry){
+            var cities = ['paris', 'lyon', 'toulouse', 'marseille', 'lille'];
+            cities.forEach(function(city){
+              if (city === entry.toLowerCase()) {
+                tags.push(city);
+                console.log('tags:' + tags);
+              } else {
+                console.log(false+" entry");
+              }
+            })
+          }
+        )
+        this.tags = tags;
+      }
+
+      response(_e,_d) {
+        this.processAjaxResult(_d.response);
+        console.log("the response is", _d.response);
+        console.log(this.ajaxResponse);
+      };
+
+      handleRequest(data){
+        console.log(data);
+      }
+
+      getResult(e) {
+        var cityFltr = new Object();
+        cityFltr.city = this.tags;
+        this.$.ajax.params =  cityFltr;
+        console.log(this.$.ajax.params);
+        this.$.ajax.generateRequest();
+      }
+
+    }
+    customElements.define(EditableCityTags.is, EditableCityTags);
+
+  </script>
+
+</dom-module>
